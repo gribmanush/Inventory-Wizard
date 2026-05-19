@@ -1,39 +1,55 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useContext, useState } from 'react';
+import { dbCreateUser, dbGetUserByEmail, dbGetUserById } from '../database/database';
+import { hashPassword, verifyPassword } from '../utils/crypto';
 
 const AuthContext = createContext();
 
-export const AuthProvider = ({ children }) => {
+export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [registeredUser, setRegisteredUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(false); // no loading
 
-  const signUp = async (userData) => {
-    // Save credentials in memory and log user in
-    setRegisteredUser(userData);
-    setUser(userData);
+  const signup = async ({ fullName, email, password, businessName }) => {
+    const existing = dbGetUserByEmail(email);
+    if (existing) {
+      return { success: false, error: 'An account with this email already exists.' };
+    }
+    const passwordHash = await hashPassword(password);
+    const result = dbCreateUser({ fullName, email, passwordHash, businessName });
+    const newUser = dbGetUserById(result.lastInsertRowId);
+    setUser(newUser);
+    return { success: true };
   };
 
   const login = async (email, password) => {
-    if (
-      registeredUser &&
-      registeredUser.email === email &&
-      registeredUser.password === password
-    ) {
-      setUser(registeredUser);
-      return true;
+    const found = dbGetUserByEmail(email);
+    if (!found) {
+      return { success: false, error: 'No account found with that email.' };
     }
-    return false;
+    const valid = await verifyPassword(password, found.password_hash);
+    if (!valid) {
+      return { success: false, error: 'Incorrect password.' };
+    }
+    setUser(found);
+    return { success: true };
   };
 
-  const logout = async () => {
+  const logout = () => {
     setUser(null);
   };
 
+  const refreshUser = () => {
+    if (user) {
+      const updated = dbGetUserById(user.user_id);
+      setUser(updated);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, signUp, login, logout }}>
+    <AuthContext.Provider value={{ user, signup, login, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );
-};
+}
 
-export const useAuth = () => useContext(AuthContext);
+export function useAuth() {
+  return useContext(AuthContext);
+}

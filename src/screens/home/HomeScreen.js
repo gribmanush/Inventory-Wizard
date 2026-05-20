@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, TextInput, Modal, FlatList,
+  ScrollView, TextInput, Modal, FlatList, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -83,11 +83,15 @@ export default function HomeScreen({ navigation }) {
         </View>
 
         <TouchableOpacity onPress={() => setProfileMenuVisible(true)} style={s.headerBtn}>
-          <View style={[s.avatarSmall, { backgroundColor: colors.primary }]}>
-            <Text style={s.avatarSmallText}>
-              {user?.full_name ? user.full_name.charAt(0).toUpperCase() : 'U'}
-            </Text>
-          </View>
+          {user?.avatar_uri ? (
+            <Image source={{ uri: user.avatar_uri }} style={s.avatarSmall} />
+          ) : (
+            <View style={[s.avatarSmall, { backgroundColor: colors.primary }]}>
+              <Text style={s.avatarSmallText}>
+                {user?.full_name ? user.full_name.charAt(0).toUpperCase() : 'U'}
+              </Text>
+            </View>
+          )}
         </TouchableOpacity>
       </View>
 
@@ -225,6 +229,7 @@ function makeStyles(colors) {
     avatarSmall: {
       width: 34, height: 34, borderRadius: 17,
       alignItems: 'center', justifyContent: 'center',
+      overflow: 'hidden',
     },
     avatarSmallText: { color: '#fff', fontSize: 15, fontWeight: '700' },
     searchDropdown: {

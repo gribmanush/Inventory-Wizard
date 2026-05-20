@@ -12,6 +12,8 @@ export function getDb() {
 export function initDatabase() {
   const db = getDb();
 
+  try { db.execSync('ALTER TABLE users ADD COLUMN avatar_uri TEXT'); } catch {}
+
   db.execSync(`
     CREATE TABLE IF NOT EXISTS users (
       user_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -117,6 +119,10 @@ export function dbUpdateUser(userId, { fullName, businessName }) {
     'UPDATE users SET full_name = ?, business_name = ? WHERE user_id = ?',
     [fullName, businessName || null, userId]
   );
+}
+
+export function dbUpdateUserAvatar(userId, avatarUri) {
+  getDb().runSync('UPDATE users SET avatar_uri = ? WHERE user_id = ?', [avatarUri, userId]);
 }
 
 // ─── Products ─────────────────────────────────────────────────────────────────

@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  ScrollView, Alert, ActivityIndicator,
+  ScrollView, Alert, ActivityIndicator, Image,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
@@ -49,12 +50,30 @@ export default function AddProductScreen({ navigation }) {
     quantity: '', lowStockThreshold: '',
     costPrice: '', sellingPrice: '', location: '',
   });
+  const [imageUri, setImageUri] = useState(null);
   const [showAdditional, setShowAdditional] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [errors, setErrors] = useState({});
 
   const s = useMemo(() => makeStyles(colors), [colors]);
+
+  const pickImage = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Permission required', 'Please allow access to your photo library.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
+    if (!result.canceled) {
+      setImageUri(result.assets[0].uri);
+    }
+  };
 
   const set = (field, val) => {
     setForm(p => ({ ...p, [field]: val }));
@@ -98,7 +117,7 @@ export default function AddProductScreen({ navigation }) {
         costPrice: form.costPrice ? Number(form.costPrice) : null,
         sellingPrice: form.sellingPrice ? Number(form.sellingPrice) : null,
         location: form.location.trim() || null,
-        imageUri: null,
+        imageUri: imageUri,
         userId: user.user_id,
       });
       setSuccess(true);
@@ -111,6 +130,7 @@ export default function AddProductScreen({ navigation }) {
 
   const resetForm = () => {
     setSuccess(false);
+    setImageUri(null);
     setForm({ name: '', brand: '', barcode: '', sku: '', quantity: '', lowStockThreshold: '', costPrice: '', sellingPrice: '', location: '' });
   };
 
@@ -151,9 +171,15 @@ export default function AddProductScreen({ navigation }) {
       </View>
 
       <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
-        <TouchableOpacity style={[s.photoBox, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Ionicons name="camera-outline" size={32} color={colors.textSecondary} />
-          <Text style={[s.photoText, { color: colors.textSecondary }]}>Choose photo</Text>
+        <TouchableOpacity style={[s.photoBox, { backgroundColor: colors.surface, borderColor: colors.border }]} onPress={pickImage}>
+          {imageUri ? (
+            <Image source={{ uri: imageUri }} style={s.photoPreview} />
+          ) : (
+            <>
+              <Ionicons name="camera-outline" size={32} color={colors.textSecondary} />
+              <Text style={[s.photoText, { color: colors.textSecondary }]}>Choose photo</Text>
+            </>
+          )}
         </TouchableOpacity>
 
         <ProductField label="Product Name *" field="name" value={form.name} onChangeText={v => set('name', v)} error={errors.name} colors={colors} />
@@ -204,7 +230,9 @@ function makeStyles(colors) {
     photoBox: {
       height: 120, borderRadius: 12, borderWidth: 2, borderStyle: 'dashed',
       alignItems: 'center', justifyContent: 'center', marginBottom: 20,
+      overflow: 'hidden',
     },
+    photoPreview: { width: '100%', height: '100%', borderRadius: 10 },
     photoText: { fontSize: 13, marginTop: 6 },
     additionalToggle: {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',

@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView,
-  TextInput, Alert, ActivityIndicator,
+  TextInput, Alert, ActivityIndicator, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { dbUpdateUser } from '../../database/database';
+import { dbUpdateUser, dbUpdateUserAvatar } from '../../database/database';
 
 export default function ProfileScreen({ navigation, route }) {
   const { user, logout, refreshUser } = useAuth();
@@ -25,6 +26,7 @@ export default function ProfileScreen({ navigation, route }) {
     businessName: user?.business_name || '',
   });
   const [editLoading, setEditLoading] = useState(false);
+  const [avatarUri, setAvatarUri] = useState(user?.avatar_uri || null);
 
   const freePeriodEnd = user?.free_period_end ? new Date(user.free_period_end) : null;
   const now = new Date();
@@ -43,6 +45,26 @@ export default function ProfileScreen({ navigation, route }) {
       Alert.alert('Error', 'Failed to update details.');
     } finally {
       setEditLoading(false);
+    }
+  };
+
+  const handlePickAvatar = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Permission required', 'Please allow access to your photo library.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
+    if (!result.canceled) {
+      const uri = result.assets[0].uri;
+      setAvatarUri(uri);
+      dbUpdateUserAvatar(user.user_id, uri);
+      refreshUser();
     }
   };
 
@@ -66,9 +88,18 @@ export default function ProfileScreen({ navigation, route }) {
 
       {/* Avatar + name */}
       <View style={[s.heroSection, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
-        <View style={[s.avatar, { backgroundColor: colors.primary }]}>
-          <Text style={s.avatarText}>{user?.full_name?.charAt(0)?.toUpperCase() || 'U'}</Text>
-        </View>
+        <TouchableOpacity onPress={handlePickAvatar} style={s.avatarWrap}>
+          {avatarUri ? (
+            <Image source={{ uri: avatarUri }} style={s.avatarImage} />
+          ) : (
+            <View style={[s.avatar, { backgroundColor: colors.primary }]}>
+              <Text style={s.avatarText}>{user?.full_name?.charAt(0)?.toUpperCase() || 'U'}</Text>
+            </View>
+          )}
+          <View style={[s.avatarEditBadge, { backgroundColor: colors.primary }]}>
+            <Ionicons name="camera" size={11} color="#fff" />
+          </View>
+        </TouchableOpacity>
         <Text style={[s.heroName, { color: colors.text }]}>{user?.full_name || 'User'}</Text>
         {user?.business_name ? <Text style={[s.heroBusiness, { color: colors.textSecondary }]}>{user.business_name}</Text> : null}
         <Text style={[s.heroEmail, { color: colors.textSecondary }]}>{user?.email}</Text>
@@ -215,8 +246,16 @@ function makeStyles(colors) {
     heroSection: {
       alignItems: 'center', padding: 24, paddingBottom: 20, borderBottomWidth: 1,
     },
-    avatar: { width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
+    avatarWrap: { marginBottom: 12, position: 'relative' },
+    avatar: { width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center' },
+    avatarImage: { width: 72, height: 72, borderRadius: 36 },
     avatarText: { color: '#fff', fontSize: 30, fontWeight: '700' },
+    avatarEditBadge: {
+      position: 'absolute', bottom: 0, right: 0,
+      width: 22, height: 22, borderRadius: 11,
+      alignItems: 'center', justifyContent: 'center',
+      borderWidth: 2, borderColor: '#fff',
+    },
     heroName: { fontSize: 20, fontWeight: '700', marginBottom: 2 },
     heroBusiness: { fontSize: 14, marginBottom: 2 },
     heroEmail: { fontSize: 13 },

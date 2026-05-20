@@ -3,6 +3,7 @@ import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ScrollView, ActivityIndicator,
 } from 'react-native';
+import BarcodeScannerModal from '../../components/BarcodeScannerModal';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
@@ -15,6 +16,7 @@ export default function StocktakeScreen({ navigation }) {
 
   const [barcode, setBarcode] = useState('');
   const [productInHand, setProductInHand] = useState('');
+  const [scannerVisible, setScannerVisible] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [lastProduct, setLastProduct] = useState(null);
@@ -60,13 +62,18 @@ export default function StocktakeScreen({ navigation }) {
       <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
         <View style={[s.fieldGroup]}>
           <Text style={[s.label, { color: colors.textSecondary }]}>Product Barcode or Name</Text>
-          <TextInput
-            style={[s.input, { backgroundColor: colors.inputBg, borderColor: error ? colors.error : colors.border, color: colors.text }]}
-            placeholder="Scan or enter barcode / name"
-            placeholderTextColor={colors.textSecondary}
-            value={barcode}
-            onChangeText={v => { setBarcode(v); setError(''); setSuccess(false); }}
-          />
+          <View style={[s.inputRow, { backgroundColor: colors.inputBg, borderColor: error ? colors.error : colors.border }]}>
+            <TextInput
+              style={[s.inputFlex, { color: colors.text }]}
+              placeholder="Scan or enter barcode / name"
+              placeholderTextColor={colors.textSecondary}
+              value={barcode}
+              onChangeText={v => { setBarcode(v); setError(''); setSuccess(false); }}
+            />
+            <TouchableOpacity onPress={() => setScannerVisible(true)} style={s.scanBtn}>
+              <Ionicons name="barcode-outline" size={22} color={colors.primary} />
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View style={s.fieldGroup}>
@@ -129,6 +136,12 @@ export default function StocktakeScreen({ navigation }) {
           </TouchableOpacity>
         )}
       </ScrollView>
+
+      <BarcodeScannerModal
+        visible={scannerVisible}
+        onScanned={data => { setBarcode(data); setError(''); setSuccess(false); }}
+        onClose={() => setScannerVisible(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -146,6 +159,9 @@ function makeStyles(colors) {
     fieldGroup: { marginBottom: 16 },
     label: { fontSize: 13, fontWeight: '500', marginBottom: 6 },
     input: { borderRadius: 10, paddingHorizontal: 14, paddingVertical: 13, fontSize: 15, borderWidth: 1 },
+    inputRow: { flexDirection: 'row', alignItems: 'center', borderRadius: 10, borderWidth: 1, paddingRight: 6 },
+    inputFlex: { flex: 1, paddingHorizontal: 14, paddingVertical: 13, fontSize: 15 },
+    scanBtn: { padding: 6 },
     alertCard: {
       flexDirection: 'row', alignItems: 'center', gap: 8,
       padding: 12, borderRadius: 10, borderWidth: 1, marginBottom: 12,

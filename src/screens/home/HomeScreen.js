@@ -10,6 +10,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useDrawer } from '../../contexts/DrawerContext';
 import { LogoIcon } from '../../components/Logo';
+import BarcodeScannerModal from '../../components/BarcodeScannerModal';
 import { dbGetLowStockProducts, dbGetNewOrdersCount, dbSearchProducts } from '../../database/database';
 
 export default function HomeScreen({ navigation }) {
@@ -23,6 +24,7 @@ export default function HomeScreen({ navigation }) {
   const [searchResults, setSearchResults] = useState([]);
   const [searchVisible, setSearchVisible] = useState(false);
   const [profileMenuVisible, setProfileMenuVisible] = useState(false);
+  const [scannerVisible, setScannerVisible] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -65,7 +67,9 @@ export default function HomeScreen({ navigation }) {
         <LogoIcon size={36} />
 
         <View style={[s.searchBar, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
-          <Ionicons name="search" size={16} color={colors.textSecondary} style={{ marginRight: 6 }} />
+          <TouchableOpacity onPress={() => setScannerVisible(true)} style={{ marginRight: 6 }}>
+            <Ionicons name="barcode-outline" size={20} color={colors.primary} />
+          </TouchableOpacity>
           <TextInput
             style={[s.searchInput, { color: colors.text }]}
             placeholder="Search products..."
@@ -200,6 +204,16 @@ export default function HomeScreen({ navigation }) {
           </View>
         </TouchableOpacity>
       </Modal>
+
+      <BarcodeScannerModal
+        visible={scannerVisible}
+        onScanned={data => {
+          setScannerVisible(false);
+          handleSearch(data);
+          setSearchVisible(true);
+        }}
+        onClose={() => setScannerVisible(false)}
+      />
     </SafeAreaView>
   );
 }

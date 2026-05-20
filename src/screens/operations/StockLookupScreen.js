@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { dbGetProductByBarcodeOrName } from '../../database/database';
+import BarcodeScannerModal from '../../components/BarcodeScannerModal';
 
 export default function StockLookupScreen({ navigation, route }) {
   const { user } = useAuth();
@@ -16,6 +17,7 @@ export default function StockLookupScreen({ navigation, route }) {
   const [product, setProduct] = useState(null);
   const [error, setError] = useState('');
   const [searched, setSearched] = useState(false);
+  const [scannerVisible, setScannerVisible] = useState(false);
 
   useEffect(() => {
     if (route?.params?.prefill) {
@@ -60,9 +62,13 @@ export default function StockLookupScreen({ navigation, route }) {
             onSubmitEditing={() => handleSearch()}
             returnKeyType="search"
           />
-          {query.length > 0 && (
+          {query.length > 0 ? (
             <TouchableOpacity onPress={() => { setQuery(''); setProduct(null); setError(''); setSearched(false); }}>
               <Ionicons name="close-circle" size={18} color={colors.textSecondary} />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity onPress={() => setScannerVisible(true)}>
+              <Ionicons name="barcode-outline" size={22} color={colors.primary} />
             </TouchableOpacity>
           )}
         </View>
@@ -121,6 +127,12 @@ export default function StockLookupScreen({ navigation, route }) {
           </View>
         )}
       </ScrollView>
+
+      <BarcodeScannerModal
+        visible={scannerVisible}
+        onScanned={data => { setScannerVisible(false); setQuery(data); handleSearch(data); }}
+        onClose={() => setScannerVisible(false)}
+      />
     </SafeAreaView>
   );
 }

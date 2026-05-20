@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { dbCreateOrder, dbAddOrderItem, dbGetProductByBarcodeOrName } from '../../database/database';
+import BarcodeScannerModal from '../../components/BarcodeScannerModal';
 
 const STEP_DETAILS = 1;
 const STEP_ITEMS = 2;
@@ -32,6 +33,7 @@ export default function AddOrderScreen({ navigation }) {
   const [amountOrdered, setAmountOrdered] = useState('');
   const [addedItems, setAddedItems] = useState([]);
   const [itemError, setItemError] = useState('');
+  const [scannerVisible, setScannerVisible] = useState(false);
 
   const setF = (field, val) => {
     setForm(p => ({ ...p, [field]: val }));
@@ -131,13 +133,18 @@ export default function AddOrderScreen({ navigation }) {
 
           <View style={s.fieldGroup}>
             <Text style={[s.label, { color: colors.textSecondary }]}>Product Barcode or Name</Text>
-            <TextInput
-              style={[s.input, { backgroundColor: colors.inputBg, borderColor: colors.border, color: colors.text }]}
-              placeholder="Scan or type barcode / name"
-              placeholderTextColor={colors.textSecondary}
-              value={barcode}
-              onChangeText={setBarcode}
-            />
+            <View style={[s.inputRow, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
+              <TextInput
+                style={[s.inputFlex, { color: colors.text }]}
+                placeholder="Scan or type barcode / name"
+                placeholderTextColor={colors.textSecondary}
+                value={barcode}
+                onChangeText={setBarcode}
+              />
+              <TouchableOpacity onPress={() => setScannerVisible(true)} style={s.scanBtn}>
+                <Ionicons name="barcode-outline" size={22} color={colors.primary} />
+              </TouchableOpacity>
+            </View>
           </View>
 
           <View style={s.fieldGroup}>
@@ -178,6 +185,12 @@ export default function AddOrderScreen({ navigation }) {
             <Text style={[s.doneBtnText, { color: colors.primary }]}>Done</Text>
           </TouchableOpacity>
         </ScrollView>
+
+        <BarcodeScannerModal
+          visible={scannerVisible}
+          onScanned={data => { setBarcode(data); setItemError(''); }}
+          onClose={() => setScannerVisible(false)}
+        />
       </SafeAreaView>
     );
   }
@@ -254,6 +267,9 @@ function makeStyles(colors) {
     fieldGroup: { marginBottom: 14 },
     label: { fontSize: 13, fontWeight: '500', marginBottom: 6 },
     input: { borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, borderWidth: 1 },
+    inputRow: { flexDirection: 'row', alignItems: 'center', borderRadius: 10, borderWidth: 1, paddingRight: 6 },
+    inputFlex: { flex: 1, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14 },
+    scanBtn: { padding: 6 },
     errorText: { fontSize: 12, marginTop: 4 },
     toggleRow: { flexDirection: 'row', gap: 8 },
     toggleBtn: { flex: 1, paddingVertical: 10, borderRadius: 8, borderWidth: 1.5, alignItems: 'center' },

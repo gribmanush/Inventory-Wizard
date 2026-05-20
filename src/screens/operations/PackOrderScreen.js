@@ -3,6 +3,7 @@ import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ScrollView, ActivityIndicator,
 } from 'react-native';
+import BarcodeScannerModal from '../../components/BarcodeScannerModal';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
@@ -27,6 +28,7 @@ export default function PackOrderScreen({ navigation }) {
 
   const [barcode, setBarcode] = useState('');
   const [amountPacked, setAmountPacked] = useState('');
+  const [scannerVisible, setScannerVisible] = useState(false);
   const [packError, setPackError] = useState('');
   const [lastPacked, setLastPacked] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -121,13 +123,18 @@ export default function PackOrderScreen({ navigation }) {
 
           <View style={s.fieldGroup}>
             <Text style={[s.label, { color: colors.textSecondary }]}>Product Barcode</Text>
-            <TextInput
-              style={[s.input, { backgroundColor: colors.inputBg, borderColor: packError ? colors.error : colors.border, color: colors.text }]}
-              placeholder="Scan or enter barcode"
-              placeholderTextColor={colors.textSecondary}
-              value={barcode}
-              onChangeText={setBarcode}
-            />
+            <View style={[s.inputRow, { backgroundColor: colors.inputBg, borderColor: packError ? colors.error : colors.border }]}>
+              <TextInput
+                style={[s.inputFlex, { color: colors.text }]}
+                placeholder="Scan or enter barcode"
+                placeholderTextColor={colors.textSecondary}
+                value={barcode}
+                onChangeText={setBarcode}
+              />
+              <TouchableOpacity onPress={() => setScannerVisible(true)} style={s.scanBtn}>
+                <Ionicons name="barcode-outline" size={22} color={colors.primary} />
+              </TouchableOpacity>
+            </View>
           </View>
 
           <View style={s.fieldGroup}>
@@ -148,6 +155,12 @@ export default function PackOrderScreen({ navigation }) {
             {loading ? <ActivityIndicator color="#fff" /> : <Text style={s.primaryBtnText}>Pack Product</Text>}
           </TouchableOpacity>
         </ScrollView>
+
+        <BarcodeScannerModal
+          visible={scannerVisible}
+          onScanned={data => { setBarcode(data); setPackError(''); }}
+          onClose={() => setScannerVisible(false)}
+        />
       </SafeAreaView>
     );
   }
@@ -204,6 +217,9 @@ function makeStyles(colors) {
     fieldGroup: { marginBottom: 16 },
     label: { fontSize: 13, fontWeight: '500', marginBottom: 6 },
     input: { borderRadius: 10, paddingHorizontal: 14, paddingVertical: 13, fontSize: 15, borderWidth: 1 },
+    inputRow: { flexDirection: 'row', alignItems: 'center', borderRadius: 10, borderWidth: 1, paddingRight: 6 },
+    inputFlex: { flex: 1, paddingHorizontal: 14, paddingVertical: 13, fontSize: 15 },
+    scanBtn: { padding: 6 },
     errorText: { fontSize: 12, marginTop: 4 },
     primaryBtn: { borderRadius: 12, paddingVertical: 15, alignItems: 'center', marginTop: 8, marginBottom: 12 },
     primaryBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },

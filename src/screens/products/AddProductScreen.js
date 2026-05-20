@@ -10,25 +10,42 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { dbCreateProduct } from '../../database/database';
 import { containsProfanity } from '../../utils/profanity';
+import BarcodeScannerModal from '../../components/BarcodeScannerModal';
 
 // Defined outside component so React never remounts it on re-render
-function ProductField({ label, hint, keyboard, value, onChangeText, error, colors }) {
+function ProductField({ label, hint, keyboard, value, onChangeText, error, colors, onScan }) {
   const s = fieldStyles;
   return (
     <View style={s.fieldGroup}>
       <Text style={[s.label, { color: colors.textSecondary }]}>{label}</Text>
-      <TextInput
-        style={[s.input, {
-          backgroundColor: colors.inputBg,
-          borderColor: error ? colors.error : colors.border,
-          color: colors.text,
-        }]}
-        placeholder={hint || label}
-        placeholderTextColor={colors.textSecondary}
-        value={value}
-        onChangeText={onChangeText}
-        keyboardType={keyboard || 'default'}
-      />
+      {onScan ? (
+        <View style={[s.inputRow, { backgroundColor: colors.inputBg, borderColor: error ? colors.error : colors.border }]}>
+          <TextInput
+            style={[s.inputFlex, { color: colors.text }]}
+            placeholder={hint || label}
+            placeholderTextColor={colors.textSecondary}
+            value={value}
+            onChangeText={onChangeText}
+            keyboardType={keyboard || 'default'}
+          />
+          <TouchableOpacity onPress={onScan} style={s.scanBtn}>
+            <Ionicons name="barcode-outline" size={22} color={colors.primary} />
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <TextInput
+          style={[s.input, {
+            backgroundColor: colors.inputBg,
+            borderColor: error ? colors.error : colors.border,
+            color: colors.text,
+          }]}
+          placeholder={hint || label}
+          placeholderTextColor={colors.textSecondary}
+          value={value}
+          onChangeText={onChangeText}
+          keyboardType={keyboard || 'default'}
+        />
+      )}
       {error ? <Text style={[s.errorText, { color: colors.error }]}>{error}</Text> : null}
     </View>
   );
@@ -38,6 +55,9 @@ const fieldStyles = StyleSheet.create({
   fieldGroup: { marginBottom: 14 },
   label: { fontSize: 13, fontWeight: '500', marginBottom: 6 },
   input: { borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, borderWidth: 1 },
+  inputRow: { flexDirection: 'row', alignItems: 'center', borderRadius: 10, borderWidth: 1, paddingRight: 6 },
+  inputFlex: { flex: 1, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14 },
+  scanBtn: { padding: 6 },
   errorText: { fontSize: 12, marginTop: 4, marginLeft: 2 },
 });
 
@@ -51,6 +71,7 @@ export default function AddProductScreen({ navigation }) {
     costPrice: '', sellingPrice: '', location: '',
   });
   const [imageUri, setImageUri] = useState(null);
+  const [scannerVisible, setScannerVisible] = useState(false);
   const [showAdditional, setShowAdditional] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -184,7 +205,7 @@ export default function AddProductScreen({ navigation }) {
 
         <ProductField label="Product Name *" field="name" value={form.name} onChangeText={v => set('name', v)} error={errors.name} colors={colors} />
         <ProductField label="Product Brand" field="brand" value={form.brand} onChangeText={v => set('brand', v)} error={errors.brand} colors={colors} />
-        <ProductField label="Product Barcode" field="barcode" keyboard="numeric" value={form.barcode} onChangeText={v => set('barcode', v)} error={errors.barcode} colors={colors} />
+        <ProductField label="Product Barcode" field="barcode" keyboard="numeric" value={form.barcode} onChangeText={v => set('barcode', v)} error={errors.barcode} colors={colors} onScan={() => setScannerVisible(true)} />
 
         <TouchableOpacity
           style={[s.additionalToggle, { borderColor: colors.border }]}
@@ -213,6 +234,12 @@ export default function AddProductScreen({ navigation }) {
           {loading ? <ActivityIndicator color="#fff" /> : <Text style={s.primaryBtnText}>Add Product</Text>}
         </TouchableOpacity>
       </ScrollView>
+
+      <BarcodeScannerModal
+        visible={scannerVisible}
+        onScanned={data => set('barcode', data)}
+        onClose={() => setScannerVisible(false)}
+      />
     </SafeAreaView>
   );
 }

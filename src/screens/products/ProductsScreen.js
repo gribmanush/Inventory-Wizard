@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  FlatList, TextInput, Alert,
+  FlatList, TextInput, Alert, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -57,9 +57,13 @@ export default function ProductsScreen({ navigation }) {
     const isLow = item.low_stock_threshold > 0 && item.quantity <= item.low_stock_threshold;
     return (
       <View style={[s.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-        <View style={[s.cardIcon, { backgroundColor: colors.primary + '18' }]}>
-          <Ionicons name="cube-outline" size={24} color={colors.primary} />
-        </View>
+        {item.image_uri ? (
+          <Image source={{ uri: item.image_uri }} style={s.cardImage} />
+        ) : (
+          <View style={[s.cardIcon, { backgroundColor: colors.primary + '18' }]}>
+            <Ionicons name="cube-outline" size={24} color={colors.primary} />
+          </View>
+        )}
         <View style={s.cardBody}>
           <Text style={[s.cardName, { color: colors.text }]} numberOfLines={1}>{item.name}</Text>
           <Text style={[s.cardSub, { color: colors.textSecondary }]}>
@@ -161,6 +165,9 @@ function makeStyles(colors) {
     cardIcon: {
       width: 46, height: 46, borderRadius: 12,
       alignItems: 'center', justifyContent: 'center', marginRight: 12,
+    },
+    cardImage: {
+      width: 46, height: 46, borderRadius: 12, marginRight: 12,
     },
     cardBody: { flex: 1 },
     cardName: { fontSize: 15, fontWeight: '600', marginBottom: 2 },

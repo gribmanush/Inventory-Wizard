@@ -119,7 +119,7 @@ export default function HomeScreen({ navigation }) {
                   onPress={() => {
                     setSearchVisible(false);
                     setSearchQuery('');
-                    navigation.navigate('StockLookup', { prefill: item.barcode || item.name });
+                    navigation.navigate('ProductDetail', { product: item });
                   }}
                 >
                   <Text style={[s.searchItemName, { color: colors.text }]}>{item.name}</Text>

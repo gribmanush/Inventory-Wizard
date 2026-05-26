@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView,
+  View, Text, TextInput, TouchableOpacity, StyleSheet,
+  FlatList, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { dbGetProductByBarcodeOrName } from '../../database/database';
+import { dbSearchProducts, dbGetProductByBarcode } from '../../database/database';
 import BarcodeScannerModal from '../../components/BarcodeScannerModal';
 
 export default function StockLookupScreen({ navigation, route }) {
@@ -14,8 +15,7 @@ export default function StockLookupScreen({ navigation, route }) {
   const { colors } = useTheme();
 
   const [query, setQuery] = useState(route?.params?.prefill || '');
-  const [product, setProduct] = useState(null);
-  const [error, setError] = useState('');
+  const [results, setResults] = useState([]);
   const [searched, setSearched] = useState(false);
   const [scannerVisible, setScannerVisible] = useState(false);
 
@@ -27,19 +27,50 @@ export default function StockLookupScreen({ navigation, route }) {
 
   const handleSearch = async (q) => {
     const term = (q !== undefined ? q : query).trim();
-    setError('');
+    if (!term) { setResults([]); setSearched(false); return; }
     setSearched(true);
-    if (!term) { setError('Enter a barcode or product name.'); return; }
-    const found = await dbGetProductByBarcodeOrName(term, user.user_id);
-    if (!found) {
-      setProduct(null);
-      setError(`No product found for "${term}".`);
-    } else {
-      setProduct(found);
-    }
+    const found = await dbSearchProducts(term, user.user_id);
+    setResults(found);
   };
 
   const s = makeStyles(colors);
+
+  const renderItem = ({ item }) => {
+    const isLow = item.low_stock_threshold > 0 && item.quantity <= item.low_stock_threshold;
+    return (
+      <TouchableOpacity
+        style={[s.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
+        onPress={() => navigation.navigate('ProductDetail', { product: item })}
+        activeOpacity={0.75}
+      >
+        {item.image_uri ? (
+          <Image source={{ uri: item.image_uri }} style={s.cardImage} />
+        ) : (
+          <View style={[s.cardIcon, { backgroundColor: colors.primary + '18' }]}>
+            <Ionicons name="cube-outline" size={24} color={colors.primary} />
+          </View>
+        )}
+        <View style={s.cardBody}>
+          <Text style={[s.cardName, { color: colors.text }]} numberOfLines={1}>{item.name}</Text>
+          <Text style={[s.cardSub, { color: colors.textSecondary }]}>
+            {item.brand ? `${item.brand} · ` : ''}{item.barcode || 'No barcode'}
+          </Text>
+          {item.sku ? <Text style={[s.cardSub, { color: colors.textSecondary }]}>SKU: {item.sku}</Text> : null}
+        </View>
+        <View style={s.cardRight}>
+          <Text style={[s.cardQty, { color: isLow ? colors.error : colors.success }]}>
+            {item.quantity}
+          </Text>
+          <Text style={[s.cardQtyLabel, { color: colors.textSecondary }]}>in stock</Text>
+          {isLow && (
+            <View style={[s.lowBadge, { backgroundColor: colors.error + '18' }]}>
+              <Text style={[s.lowBadgeText, { color: colors.error }]}>Low</Text>
+            </View>
+          )}
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <SafeAreaView style={[s.safe, { backgroundColor: colors.background }]}>
@@ -51,19 +82,21 @@ export default function StockLookupScreen({ navigation, route }) {
         <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
+      <View style={s.searchWrap}>
         <View style={[s.searchRow, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
+          <Ionicons name="search" size={16} color={colors.textSecondary} style={{ marginRight: 8 }} />
           <TextInput
             style={[s.searchInput, { color: colors.text }]}
-            placeholder="Enter Product Barcode or Name"
+            placeholder="Search by name, barcode, SKU..."
             placeholderTextColor={colors.textSecondary}
             value={query}
-            onChangeText={v => { setQuery(v); setSearched(false); setProduct(null); setError(''); }}
+            onChangeText={v => { setQuery(v); if (!v.trim()) { setResults([]); setSearched(false); } }}
             onSubmitEditing={() => handleSearch()}
             returnKeyType="search"
+            autoFocus
           />
           {query.length > 0 ? (
-            <TouchableOpacity onPress={() => { setQuery(''); setProduct(null); setError(''); setSearched(false); }}>
+            <TouchableOpacity onPress={() => { setQuery(''); setResults([]); setSearched(false); }}>
               <Ionicons name="close-circle" size={18} color={colors.textSecondary} />
             </TouchableOpacity>
           ) : (
@@ -72,61 +105,38 @@ export default function StockLookupScreen({ navigation, route }) {
             </TouchableOpacity>
           )}
         </View>
+        <TouchableOpacity
+          style={[s.searchBtn, { backgroundColor: colors.primary }]}
+          onPress={() => handleSearch()}
+        >
+          <Ionicons name="search" size={18} color="#fff" />
+        </TouchableOpacity>
+      </View>
 
-        <View style={s.btnRow}>
-          <TouchableOpacity style={[s.searchBtn, { backgroundColor: colors.primary }]} onPress={() => handleSearch()}>
-            <Ionicons name="search" size={18} color="#fff" />
-            <Text style={s.searchBtnText}>Search</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[s.closeBtn, { borderColor: colors.border }]} onPress={() => navigation.goBack()}>
-            <Text style={[s.closeBtnText, { color: colors.textSecondary }]}>Close</Text>
-          </TouchableOpacity>
-        </View>
-
-        {error ? (
-          <View style={[s.errorCard, { backgroundColor: colors.error + '12', borderColor: colors.error }]}>
-            <Ionicons name="alert-circle-outline" size={18} color={colors.error} />
-            <Text style={[s.errorText, { color: colors.error }]}>{error}</Text>
-          </View>
-        ) : null}
-
-        {product && (
-          <View style={[s.resultCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <View style={[s.photoPlaceholder, { backgroundColor: colors.primary + '18' }]}>
-              <Ionicons name="cube-outline" size={48} color={colors.primary} />
-              <Text style={[s.photoLabel, { color: colors.textSecondary }]}>photo</Text>
+      <FlatList
+        data={results}
+        keyExtractor={item => String(item.product_id)}
+        renderItem={renderItem}
+        contentContainerStyle={s.list}
+        keyboardShouldPersistTaps="handled"
+        ListEmptyComponent={
+          searched ? (
+            <View style={s.empty}>
+              <Ionicons name="search-outline" size={48} color={colors.textSecondary} />
+              <Text style={[s.emptyText, { color: colors.textSecondary }]}>
+                No products found for "{query}"
+              </Text>
             </View>
-
-            {[
-              { label: 'Product Name', value: product.name },
-              { label: 'Product Brand', value: product.brand || '—' },
-              { label: 'Product Barcode', value: product.barcode || '—' },
-              { label: 'SKU', value: product.sku || '—' },
-              { label: 'Stock In Hand', value: String(product.quantity) },
-              { label: 'Low Stock Threshold', value: product.low_stock_threshold > 0 ? String(product.low_stock_threshold) : '—' },
-              { label: 'Location', value: product.location || '—' },
-              { label: 'Cost Price', value: product.cost_price != null ? `$${Number(product.cost_price).toFixed(2)}` : '—' },
-              { label: 'Selling Price', value: product.selling_price != null ? `$${Number(product.selling_price).toFixed(2)}` : '—' },
-            ].map(row => (
-              <View key={row.label} style={[s.detailRow, { borderBottomColor: colors.divider }]}>
-                <Text style={[s.detailLabel, { color: colors.textSecondary }]}>{row.label}</Text>
-                <Text style={[s.detailValue, { color: colors.text }]}>{row.value}</Text>
-              </View>
-            ))}
-
-            {product.low_stock_threshold > 0 && product.quantity <= product.low_stock_threshold && (
-              <View style={[s.lowAlert, { backgroundColor: colors.warning + '18' }]}>
-                <Ionicons name="warning-outline" size={16} color={colors.warning} />
-                <Text style={[s.lowAlertText, { color: colors.warning }]}>Stock is below threshold!</Text>
-              </View>
-            )}
-
-            <TouchableOpacity style={[s.okBtn, { backgroundColor: colors.primary }]} onPress={() => { setProduct(null); setQuery(''); setSearched(false); }}>
-              <Text style={s.okBtnText}>OK</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </ScrollView>
+          ) : (
+            <View style={s.empty}>
+              <Ionicons name="cube-outline" size={48} color={colors.textSecondary} />
+              <Text style={[s.emptyText, { color: colors.textSecondary }]}>
+                Search by name, barcode or SKU
+              </Text>
+            </View>
+          )
+        }
+      />
 
       <BarcodeScannerModal
         visible={scannerVisible}
@@ -146,28 +156,38 @@ function makeStyles(colors) {
     },
     backBtn: { width: 40 },
     headerTitle: { fontSize: 18, fontWeight: '700' },
-    scroll: { padding: 16, paddingBottom: 40 },
-    searchRow: {
-      flexDirection: 'row', alignItems: 'center',
-      borderRadius: 12, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 4, marginBottom: 12,
+    searchWrap: {
+      flexDirection: 'row', alignItems: 'center', gap: 8,
+      paddingHorizontal: 12, paddingVertical: 10,
     },
-    searchInput: { flex: 1, fontSize: 14, paddingVertical: 10 },
-    btnRow: { flexDirection: 'row', gap: 10, marginBottom: 16 },
-    searchBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 12, borderRadius: 10 },
-    searchBtnText: { color: '#fff', fontSize: 14, fontWeight: '600' },
-    closeBtn: { paddingHorizontal: 20, paddingVertical: 12, borderRadius: 10, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-    closeBtnText: { fontSize: 14 },
-    errorCard: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 12, borderRadius: 10, borderWidth: 1, marginBottom: 12 },
-    errorText: { fontSize: 13 },
-    resultCard: { borderRadius: 14, borderWidth: 1, overflow: 'hidden' },
-    photoPlaceholder: { height: 120, alignItems: 'center', justifyContent: 'center' },
-    photoLabel: { fontSize: 12, marginTop: 4 },
-    detailRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 11, borderBottomWidth: 1 },
-    detailLabel: { fontSize: 13, flex: 1 },
-    detailValue: { fontSize: 13, fontWeight: '600', flex: 1, textAlign: 'right' },
-    lowAlert: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 10, margin: 12, borderRadius: 8 },
-    lowAlertText: { fontSize: 13, fontWeight: '500' },
-    okBtn: { margin: 16, borderRadius: 10, paddingVertical: 12, alignItems: 'center' },
-    okBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+    searchRow: {
+      flex: 1, flexDirection: 'row', alignItems: 'center',
+      borderRadius: 12, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 4,
+    },
+    searchInput: { flex: 1, fontSize: 14, paddingVertical: 9 },
+    searchBtn: {
+      width: 44, height: 44, borderRadius: 12,
+      alignItems: 'center', justifyContent: 'center',
+    },
+    list: { padding: 12, paddingBottom: 30 },
+    card: {
+      flexDirection: 'row', alignItems: 'center',
+      borderRadius: 12, padding: 14, marginBottom: 10, borderWidth: 1,
+    },
+    cardIcon: {
+      width: 46, height: 46, borderRadius: 12,
+      alignItems: 'center', justifyContent: 'center', marginRight: 12,
+    },
+    cardImage: { width: 46, height: 46, borderRadius: 12, marginRight: 12 },
+    cardBody: { flex: 1 },
+    cardName: { fontSize: 15, fontWeight: '600', marginBottom: 2 },
+    cardSub: { fontSize: 12 },
+    cardRight: { alignItems: 'center', minWidth: 50 },
+    cardQty: { fontSize: 22, fontWeight: '700' },
+    cardQtyLabel: { fontSize: 11, marginBottom: 4 },
+    lowBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
+    lowBadgeText: { fontSize: 11, fontWeight: '600' },
+    empty: { alignItems: 'center', marginTop: 60, gap: 12 },
+    emptyText: { fontSize: 14, textAlign: 'center' },
   });
 }

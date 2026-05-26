@@ -10,6 +10,7 @@ import SignupScreen from '../screens/auth/SignupScreen';
 import HomeScreen from '../screens/home/HomeScreen';
 import ProductsScreen from '../screens/products/ProductsScreen';
 import AddProductScreen from '../screens/products/AddProductScreen';
+import ProductDetailScreen from '../screens/products/ProductDetailScreen';
 import OrdersScreen from '../screens/orders/OrdersScreen';
 import AddOrderScreen from '../screens/orders/AddOrderScreen';
 import PackOrderScreen from '../screens/operations/PackOrderScreen';
@@ -38,6 +39,7 @@ function MainStack() {
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Products" component={ProductsScreen} />
         <Stack.Screen name="AddProduct" component={AddProductScreen} />
+        <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
         <Stack.Screen name="Orders" component={OrdersScreen} />
         <Stack.Screen name="AddOrder" component={AddOrderScreen} />
         <Stack.Screen name="PackOrder" component={PackOrderScreen} />

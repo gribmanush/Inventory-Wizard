@@ -56,7 +56,11 @@ export default function ProductsScreen({ navigation }) {
   const renderItem = ({ item }) => {
     const isLow = item.low_stock_threshold > 0 && item.quantity <= item.low_stock_threshold;
     return (
-      <View style={[s.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+      <TouchableOpacity
+        style={[s.card, { backgroundColor: colors.surface, borderColor: colors.border }]}
+        onPress={() => navigation.navigate('ProductDetail', { product: item })}
+        activeOpacity={0.75}
+      >
         {item.image_uri ? (
           <Image source={{ uri: item.image_uri }} style={s.cardImage} />
         ) : (
@@ -82,7 +86,7 @@ export default function ProductsScreen({ navigation }) {
             </View>
           )}
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 

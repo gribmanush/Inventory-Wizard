@@ -33,29 +33,34 @@ export default function PackOrderScreen({ navigation }) {
   const [lastPacked, setLastPacked] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const handleEnterSO = () => {
+  const handleEnterSO = async () => {
     setSoError('');
     if (!soInput.trim()) { setSoError('Enter an SO number.'); return; }
-    const found = dbGetOrderBySoNumber(soInput.trim(), user.user_id);
+    const found = await dbGetOrderBySoNumber(soInput.trim(), user.user_id);
     if (!found) { setSoError(`Order "${soInput}" not found.`); return; }
     setOrder(found);
     setStep(STEP_PACK);
   };
 
-  const handlePackProduct = () => {
+  const handlePackProduct = async () => {
     setPackError('');
     if (!barcode.trim()) { setPackError('Enter a product barcode.'); return; }
     if (!amountPacked.trim() || isNaN(Number(amountPacked)) || Number(amountPacked) <= 0) {
       setPackError('Enter a valid amount.'); return;
     }
-    const product = dbGetProductByBarcodeOrName(barcode.trim(), user.user_id);
-    if (!product) { setPackError('Product not found. Check the barcode.'); return; }
     setLoading(true);
-    const newQty = Math.max(0, product.quantity - Number(amountPacked));
-    dbUpdateProductQuantity(product.product_id, newQty, user.user_id, 'pack_order', order.order_id, 'order');
-    setLastPacked({ product, packed: Number(amountPacked) });
-    setStep(STEP_DONE);
-    setLoading(false);
+    try {
+      const product = await dbGetProductByBarcodeOrName(barcode.trim(), user.user_id);
+      if (!product) { setPackError('Product not found. Check the barcode.'); setLoading(false); return; }
+      const newQty = Math.max(0, product.quantity - Number(amountPacked));
+      await dbUpdateProductQuantity(product.product_id, newQty, user.user_id);
+      setLastPacked({ product, packed: Number(amountPacked) });
+      setStep(STEP_DONE);
+    } catch {
+      setPackError('Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handlePackAnother = () => {

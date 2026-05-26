@@ -34,12 +34,12 @@ export default function ProfileScreen({ navigation, route }) {
   const totalDays = 730;
   const progress = freePeriodEnd ? Math.min(1, Math.max(0, 1 - (freePeriodEnd - now) / (totalDays * 24 * 60 * 60 * 1000))) : 1;
 
-  const handleSaveDetails = () => {
+  const handleSaveDetails = async () => {
     if (!editForm.fullName.trim()) { Alert.alert('Error', 'Full name cannot be empty.'); return; }
     setEditLoading(true);
     try {
-      dbUpdateUser(user.user_id, { fullName: editForm.fullName.trim(), businessName: editForm.businessName.trim() });
-      refreshUser();
+      await dbUpdateUser(user.user_id, { fullName: editForm.fullName.trim(), businessName: editForm.businessName.trim() });
+      await refreshUser();
       Alert.alert('Success', 'Details updated successfully.');
     } catch {
       Alert.alert('Error', 'Failed to update details.');
@@ -63,8 +63,8 @@ export default function ProfileScreen({ navigation, route }) {
     if (!result.canceled) {
       const uri = result.assets[0].uri;
       setAvatarUri(uri);
-      dbUpdateUserAvatar(user.user_id, uri);
-      refreshUser();
+      await dbUpdateUserAvatar(user.user_id, uri);
+      await refreshUser();
     }
   };
 

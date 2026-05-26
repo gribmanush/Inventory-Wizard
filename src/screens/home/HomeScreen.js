@@ -28,17 +28,22 @@ export default function HomeScreen({ navigation }) {
 
   useFocusEffect(
     useCallback(() => {
-      if (user) {
-        setLowStockCount(dbGetLowStockProducts(user.user_id).length);
-        setNewOrdersCount(dbGetNewOrdersCount(user.user_id));
-      }
+      if (!user) return;
+      (async () => {
+        const [low, count] = await Promise.all([
+          dbGetLowStockProducts(user.user_id),
+          dbGetNewOrdersCount(user.user_id),
+        ]);
+        setLowStockCount(low.length);
+        setNewOrdersCount(count);
+      })();
     }, [user])
   );
 
-  const handleSearch = (text) => {
+  const handleSearch = async (text) => {
     setSearchQuery(text);
     if (text.trim().length > 0 && user) {
-      setSearchResults(dbSearchProducts(text.trim(), user.user_id));
+      setSearchResults(await dbSearchProducts(text.trim(), user.user_id));
     } else {
       setSearchResults([]);
     }

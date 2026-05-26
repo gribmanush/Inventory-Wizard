@@ -24,23 +24,27 @@ export default function OrdersScreen({ navigation }) {
 
   useFocusEffect(
     useCallback(() => {
-      if (user) setOrders(dbGetOrdersByUser(user.user_id));
+      if (!user) return;
+      (async () => {
+        setOrders(await dbGetOrdersByUser(user.user_id));
+      })();
     }, [user])
   );
 
-  const toggleExpand = (orderId) => {
+  const toggleExpand = async (orderId) => {
     if (expanded === orderId) {
       setExpanded(null);
     } else {
       setExpanded(orderId);
       if (!orderItems[orderId]) {
-        setOrderItems(p => ({ ...p, [orderId]: dbGetOrderItems(orderId) }));
+        const items = await dbGetOrderItems(orderId, user.user_id);
+        setOrderItems(p => ({ ...p, [orderId]: items }));
       }
     }
   };
 
-  const markComplete = (orderId) => {
-    dbUpdateOrderStatus(orderId, 'completed');
+  const markComplete = async (orderId) => {
+    await dbUpdateOrderStatus(orderId, 'completed', user.user_id);
     setOrders(p => p.map(o => o.order_id === orderId ? { ...o, status: 'completed' } : o));
   };
 

@@ -23,14 +23,14 @@ export default function StockLookupScreen({ navigation, route }) {
     if (route?.params?.prefill) {
       handleSearch(route.params.prefill);
     }
-  }, []);
+  }, [route?.params?.prefill]);
 
-  const handleSearch = (q) => {
-    const term = (q || query).trim();
+  const handleSearch = async (q) => {
+    const term = (q !== undefined ? q : query).trim();
     setError('');
     setSearched(true);
     if (!term) { setError('Enter a barcode or product name.'); return; }
-    const found = dbGetProductByBarcodeOrName(term, user.user_id);
+    const found = await dbGetProductByBarcodeOrName(term, user.user_id);
     if (!found) {
       setProduct(null);
       setError(`No product found for "${term}".`);

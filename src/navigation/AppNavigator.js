@@ -1,4 +1,5 @@
 import React from 'react';
+import { View, ActivityIndicator } from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { useAuth } from '../contexts/AuthContext';
 import { DrawerProvider } from '../contexts/DrawerContext';
@@ -52,6 +53,13 @@ function MainStack() {
 }
 
 export default function AppNavigator() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#EBF4FF' }}>
+        <ActivityIndicator size="large" color="#6366F1" />
+      </View>
+    );
+  }
   return user ? <MainStack /> : <AuthStack />;
 }

@@ -24,29 +24,29 @@ export default function ProductsScreen({ navigation }) {
     }, [user])
   );
 
-  const loadProducts = () => {
+  const loadProducts = async () => {
     if (!user) return;
-    setProducts(dbGetProductsByUser(user.user_id));
+    setProducts(await dbGetProductsByUser(user.user_id));
     setShowLowStockOnly(false);
     setQuery('');
   };
 
-  const handleSearch = (text) => {
+  const handleSearch = async (text) => {
     setQuery(text);
     if (text.trim()) {
-      setProducts(dbSearchProducts(text.trim(), user.user_id));
+      setProducts(await dbSearchProducts(text.trim(), user.user_id));
     } else {
-      setProducts(dbGetProductsByUser(user.user_id));
+      setProducts(await dbGetProductsByUser(user.user_id));
     }
   };
 
-  const toggleLowStock = () => {
+  const toggleLowStock = async () => {
     if (!showLowStockOnly) {
-      setProducts(dbGetLowStockProducts(user.user_id));
+      setProducts(await dbGetLowStockProducts(user.user_id));
       setShowLowStockOnly(true);
       setQuery('');
     } else {
-      setProducts(dbGetProductsByUser(user.user_id));
+      setProducts(await dbGetProductsByUser(user.user_id));
       setShowLowStockOnly(false);
     }
   };

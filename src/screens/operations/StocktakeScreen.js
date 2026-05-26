@@ -22,21 +22,25 @@ export default function StocktakeScreen({ navigation }) {
   const [lastProduct, setLastProduct] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     setError('');
     setSuccess(false);
     if (!barcode.trim()) { setError('Enter a product barcode or name.'); return; }
     if (!productInHand.trim() || isNaN(Number(productInHand)) || Number(productInHand) < 0) {
       setError('Enter a valid stock count.'); return;
     }
-    const product = dbGetProductByBarcodeOrName(barcode.trim(), user.user_id);
-    if (!product) { setError(`Product not found for "${barcode}".`); return; }
-
     setLoading(true);
-    dbUpdateProductQuantity(product.product_id, Number(productInHand), user.user_id, 'stocktake');
-    setLastProduct({ ...product, newQty: Number(productInHand) });
-    setSuccess(true);
-    setLoading(false);
+    try {
+      const product = await dbGetProductByBarcodeOrName(barcode.trim(), user.user_id);
+      if (!product) { setError(`Product not found for "${barcode}".`); return; }
+      await dbUpdateProductQuantity(product.product_id, Number(productInHand), user.user_id);
+      setLastProduct({ ...product, newQty: Number(productInHand) });
+      setSuccess(true);
+    } catch {
+      setError('Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleReset = () => {

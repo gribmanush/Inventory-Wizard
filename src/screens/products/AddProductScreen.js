@@ -124,11 +124,11 @@ export default function AddProductScreen({ navigation }) {
     return Object.keys(e).length === 0;
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!validate()) return;
     setLoading(true);
     try {
-      dbCreateProduct({
+      await dbCreateProduct({
         name: form.name.trim(),
         brand: form.brand.trim() || null,
         barcode: form.barcode.trim() || null,

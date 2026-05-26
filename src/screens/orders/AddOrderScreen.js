@@ -48,11 +48,11 @@ export default function AddOrderScreen({ navigation }) {
     return Object.keys(e).length === 0;
   };
 
-  const handleCreateOrder = () => {
+  const handleCreateOrder = async () => {
     if (!validateDetails()) return;
     setLoading(true);
     try {
-      const result = dbCreateOrder({
+      const result = await dbCreateOrder({
         soNumber: form.soNumber.trim(),
         customerName: form.merchantName.trim(),
         shippingAddress: form.deliveryAddress.trim(),
@@ -68,18 +68,30 @@ export default function AddOrderScreen({ navigation }) {
     }
   };
 
-  const handleAddItem = () => {
+  const handleAddItem = async () => {
     setItemError('');
     if (!barcode.trim()) { setItemError('Enter a product barcode or name.'); return; }
     if (!amountOrdered.trim() || isNaN(Number(amountOrdered)) || Number(amountOrdered) <= 0) {
       setItemError('Enter a valid amount.'); return;
     }
-    const product = dbGetProductByBarcodeOrName(barcode.trim(), user.user_id);
-    if (!product) { setItemError('Product not found. Check the barcode or name.'); return; }
-    dbAddOrderItem({ orderId, productId: product.product_id, quantity: Number(amountOrdered), unitPrice: product.selling_price || 0 });
-    setAddedItems(p => [...p, { ...product, orderedQty: Number(amountOrdered) }]);
-    setBarcode('');
-    setAmountOrdered('');
+    try {
+      const product = await dbGetProductByBarcodeOrName(barcode.trim(), user.user_id);
+      if (!product) { setItemError('Product not found. Check the barcode or name.'); return; }
+      await dbAddOrderItem({
+        orderId,
+        productId: product.product_id,
+        quantity: Number(amountOrdered),
+        unitPrice: product.selling_price || 0,
+        userId: user.user_id,
+        productName: product.name,
+        barcode: product.barcode,
+      });
+      setAddedItems(p => [...p, { ...product, orderedQty: Number(amountOrdered) }]);
+      setBarcode('');
+      setAmountOrdered('');
+    } catch {
+      setItemError('Something went wrong. Please try again.');
+    }
   };
 
   const handleDone = () => setStep(STEP_SUCCESS);

@@ -79,7 +79,32 @@ export default function AddProductScreen({ navigation }) {
 
   const s = useMemo(() => makeStyles(colors), [colors]);
 
-  const pickImage = async () => {
+  const showPhotoOptions = () => {
+    Alert.alert('Add Photo', 'Choose an option', [
+      { text: 'Take a Picture', onPress: takePhoto },
+      { text: 'Choose from Gallery', onPress: pickFromGallery },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  };
+
+  const takePhoto = async () => {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Permission required', 'Please allow camera access.');
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
+    if (!result.canceled) {
+      setImageUri(result.assets[0].uri);
+    }
+  };
+
+  const pickFromGallery = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
       Alert.alert('Permission required', 'Please allow access to your photo library.');
@@ -192,7 +217,7 @@ export default function AddProductScreen({ navigation }) {
       </View>
 
       <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
-        <TouchableOpacity style={[s.photoBox, { backgroundColor: colors.surface, borderColor: colors.border }]} onPress={pickImage}>
+        <TouchableOpacity style={[s.photoBox, { backgroundColor: colors.surface, borderColor: colors.border }]} onPress={showPhotoOptions}>
           {imageUri ? (
             <Image source={{ uri: imageUri }} style={s.photoPreview} />
           ) : (

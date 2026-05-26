@@ -4,6 +4,8 @@ import {
   ScrollView, ActivityIndicator,
 } from 'react-native';
 import BarcodeScannerModal from '../../components/BarcodeScannerModal';
+import HelpModal from '../../components/HelpModal';
+import useHelpModal from '../../hooks/useHelpModal';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
@@ -21,6 +23,7 @@ export default function StocktakeScreen({ navigation }) {
   const [success, setSuccess] = useState(false);
   const [lastProduct, setLastProduct] = useState(null);
   const [loading, setLoading] = useState(false);
+  const { helpVisible, showHelp, hideHelp } = useHelpModal('Stocktake');
 
   const handleUpdate = async () => {
     setError('');
@@ -60,7 +63,9 @@ export default function StocktakeScreen({ navigation }) {
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={[s.headerTitle, { color: colors.text }]}>Stocktake</Text>
-        <View style={{ width: 40 }} />
+        <TouchableOpacity onPress={showHelp} style={{ width: 40, alignItems: 'flex-end' }}>
+          <Ionicons name="help-circle-outline" size={22} color={colors.textSecondary} />
+        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
@@ -146,6 +151,7 @@ export default function StocktakeScreen({ navigation }) {
         onScanned={data => { setBarcode(data); setError(''); setSuccess(false); }}
         onClose={() => setScannerVisible(false)}
       />
+      <HelpModal visible={helpVisible} onClose={hideHelp} screenKey="Stocktake" />
     </SafeAreaView>
   );
 }

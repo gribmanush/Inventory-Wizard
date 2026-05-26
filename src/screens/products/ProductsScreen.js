@@ -9,11 +9,14 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { dbGetProductsByUser, dbSearchProducts, dbGetLowStockProducts } from '../../database/database';
+import HelpModal from '../../components/HelpModal';
+import useHelpModal from '../../hooks/useHelpModal';
 
 export default function ProductsScreen({ navigation }) {
   const { user } = useAuth();
   const { colors } = useTheme();
 
+  const { helpVisible, showHelp, hideHelp } = useHelpModal('Products');
   const [products, setProducts] = useState([]);
   const [query, setQuery] = useState('');
   const [showLowStockOnly, setShowLowStockOnly] = useState(false);
@@ -97,9 +100,14 @@ export default function ProductsScreen({ navigation }) {
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={[s.title, { color: colors.text }]}>Products</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('AddProduct')} style={s.addBtn}>
-          <Ionicons name="add" size={26} color={colors.primary} />
-        </TouchableOpacity>
+        <View style={s.headerRight}>
+          <TouchableOpacity onPress={showHelp}>
+            <Ionicons name="help-circle-outline" size={22} color={colors.textSecondary} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('AddProduct')}>
+            <Ionicons name="add" size={26} color={colors.primary} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={s.filterBar}>
@@ -121,6 +129,7 @@ export default function ProductsScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
+      <HelpModal visible={helpVisible} onClose={hideHelp} screenKey="Products" />
       <FlatList
         data={products}
         keyExtractor={item => String(item.product_id)}
@@ -148,7 +157,7 @@ function makeStyles(colors) {
     },
     backBtn: { width: 40 },
     title: { fontSize: 18, fontWeight: '700' },
-    addBtn: { width: 40, alignItems: 'flex-end' },
+    headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8, width: 70, justifyContent: 'flex-end' },
     filterBar: {
       flexDirection: 'row', gap: 8, padding: 12,
     },

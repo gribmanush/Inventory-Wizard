@@ -9,11 +9,14 @@ import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { dbUpdateUser, dbUpdateUserAvatar } from '../../database/database';
+import HelpModal from '../../components/HelpModal';
+import useHelpModal from '../../hooks/useHelpModal';
 
 export default function ProfileScreen({ navigation, route }) {
   const { user, logout, refreshUser } = useAuth();
   const { colors } = useTheme();
 
+  const { helpVisible, showHelp, hideHelp } = useHelpModal('Profile');
   const initialSection = route?.params?.section || 'account';
   const [activeSection, setActiveSection] = useState(initialSection);
 
@@ -83,7 +86,9 @@ export default function ProfileScreen({ navigation, route }) {
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={[s.headerTitle, { color: colors.text }]}>Profile</Text>
-        <View style={{ width: 40 }} />
+        <TouchableOpacity onPress={showHelp} style={{ width: 40, alignItems: 'flex-end' }}>
+          <Ionicons name="help-circle-outline" size={22} color={colors.textSecondary} />
+        </TouchableOpacity>
       </View>
 
       {/* Avatar + name */}
@@ -230,6 +235,7 @@ export default function ProfileScreen({ navigation, route }) {
           </View>
         )}
       </ScrollView>
+      <HelpModal visible={helpVisible} onClose={hideHelp} screenKey="Profile" />
     </SafeAreaView>
   );
 }

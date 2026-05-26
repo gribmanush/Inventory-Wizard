@@ -8,6 +8,8 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { dbGetOrdersByUser, dbGetOrderItems, dbUpdateOrderStatus } from '../../database/database';
+import HelpModal from '../../components/HelpModal';
+import useHelpModal from '../../hooks/useHelpModal';
 
 const STATUS_COLORS = {
   pending: '#F59E0B',
@@ -18,6 +20,7 @@ const STATUS_COLORS = {
 export default function OrdersScreen({ navigation }) {
   const { user } = useAuth();
   const { colors } = useTheme();
+  const { helpVisible, showHelp, hideHelp } = useHelpModal('Orders');
   const [orders, setOrders] = useState([]);
   const [expanded, setExpanded] = useState(null);
   const [orderItems, setOrderItems] = useState({});
@@ -132,11 +135,17 @@ export default function OrdersScreen({ navigation }) {
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={[s.title, { color: colors.text }]}>Orders</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('AddOrder')} style={s.addBtn}>
-          <Ionicons name="add" size={26} color={colors.primary} />
-        </TouchableOpacity>
+        <View style={s.headerRight}>
+          <TouchableOpacity onPress={showHelp}>
+            <Ionicons name="help-circle-outline" size={22} color={colors.textSecondary} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('AddOrder')}>
+            <Ionicons name="add" size={26} color={colors.primary} />
+          </TouchableOpacity>
+        </View>
       </View>
 
+      <HelpModal visible={helpVisible} onClose={hideHelp} screenKey="Orders" />
       <FlatList
         data={orders}
         keyExtractor={item => String(item.order_id)}
@@ -162,7 +171,7 @@ function makeStyles(colors) {
     },
     backBtn: { width: 40 },
     title: { fontSize: 18, fontWeight: '700' },
-    addBtn: { width: 40, alignItems: 'flex-end' },
+    headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8, width: 70, justifyContent: 'flex-end' },
     list: { padding: 12, paddingBottom: 30 },
     card: { borderRadius: 12, marginBottom: 10, borderWidth: 1, overflow: 'hidden' },
     cardHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 14 },

@@ -5,9 +5,12 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
+import HelpModal from '../../components/HelpModal';
+import useHelpModal from '../../hooks/useHelpModal';
 
 export default function ProductDetailScreen({ navigation, route }) {
   const { colors } = useTheme();
+  const { helpVisible, showHelp, hideHelp } = useHelpModal('ProductDetail');
   const product = route.params?.product;
 
   if (!product) {
@@ -44,7 +47,9 @@ export default function ProductDetailScreen({ navigation, route }) {
         <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>
           {product.name}
         </Text>
-        <View style={{ width: 40 }} />
+        <TouchableOpacity onPress={showHelp} style={{ width: 40, alignItems: 'flex-end' }}>
+          <Ionicons name="help-circle-outline" size={22} color={colors.textSecondary} />
+        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -100,6 +105,7 @@ export default function ProductDetailScreen({ navigation, route }) {
         </View>
 
       </ScrollView>
+      <HelpModal visible={helpVisible} onClose={hideHelp} screenKey="ProductDetail" />
     </SafeAreaView>
   );
 }

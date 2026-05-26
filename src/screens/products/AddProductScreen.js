@@ -11,6 +11,8 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { dbCreateProduct } from '../../database/database';
 import { containsProfanity } from '../../utils/profanity';
 import BarcodeScannerModal from '../../components/BarcodeScannerModal';
+import HelpModal from '../../components/HelpModal';
+import useHelpModal from '../../hooks/useHelpModal';
 
 // Defined outside component so React never remounts it on re-render
 function ProductField({ label, hint, keyboard, value, onChangeText, error, colors, onScan }) {
@@ -65,6 +67,7 @@ export default function AddProductScreen({ navigation }) {
   const { user } = useAuth();
   const { colors } = useTheme();
 
+  const { helpVisible, showHelp, hideHelp } = useHelpModal('AddProduct');
   const [form, setForm] = useState({
     name: '', brand: '', barcode: '', sku: '',
     quantity: '', lowStockThreshold: '',
@@ -188,7 +191,9 @@ export default function AddProductScreen({ navigation }) {
             <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
           <Text style={[s.headerTitle, { color: colors.text }]}>Add Product</Text>
-          <View style={{ width: 40 }} />
+          <TouchableOpacity onPress={showHelp} style={{ width: 40, alignItems: 'flex-end' }}>
+            <Ionicons name="help-circle-outline" size={22} color={colors.textSecondary} />
+          </TouchableOpacity>
         </View>
         <View style={s.successContainer}>
           <View style={[s.successIcon, { backgroundColor: colors.success + '20' }]}>
@@ -202,6 +207,7 @@ export default function AddProductScreen({ navigation }) {
             <Text style={[s.secondaryBtnText, { color: colors.text }]}>View Products</Text>
           </TouchableOpacity>
         </View>
+        <HelpModal visible={helpVisible} onClose={hideHelp} screenKey="AddProduct" />
       </SafeAreaView>
     );
   }
@@ -265,6 +271,7 @@ export default function AddProductScreen({ navigation }) {
         onScanned={data => set('barcode', data)}
         onClose={() => setScannerVisible(false)}
       />
+      <HelpModal visible={helpVisible} onClose={hideHelp} screenKey="AddProduct" />
     </SafeAreaView>
   );
 }

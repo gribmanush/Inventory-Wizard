@@ -9,6 +9,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { dbSearchProducts, dbGetProductByBarcode } from '../../database/database';
 import BarcodeScannerModal from '../../components/BarcodeScannerModal';
+import HelpModal from '../../components/HelpModal';
+import useHelpModal from '../../hooks/useHelpModal';
 
 export default function StockLookupScreen({ navigation, route }) {
   const { user } = useAuth();
@@ -18,6 +20,7 @@ export default function StockLookupScreen({ navigation, route }) {
   const [results, setResults] = useState([]);
   const [searched, setSearched] = useState(false);
   const [scannerVisible, setScannerVisible] = useState(false);
+  const { helpVisible, showHelp, hideHelp } = useHelpModal('StockLookup');
 
   useEffect(() => {
     if (route?.params?.prefill) {
@@ -79,7 +82,9 @@ export default function StockLookupScreen({ navigation, route }) {
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={[s.headerTitle, { color: colors.text }]}>Stock Lookup</Text>
-        <View style={{ width: 40 }} />
+        <TouchableOpacity onPress={showHelp} style={{ width: 40, alignItems: 'flex-end' }}>
+          <Ionicons name="help-circle-outline" size={22} color={colors.textSecondary} />
+        </TouchableOpacity>
       </View>
 
       <View style={s.searchWrap}>
@@ -143,6 +148,7 @@ export default function StockLookupScreen({ navigation, route }) {
         onScanned={data => { setScannerVisible(false); setQuery(data); handleSearch(data); }}
         onClose={() => setScannerVisible(false)}
       />
+      <HelpModal visible={helpVisible} onClose={hideHelp} screenKey="StockLookup" />
     </SafeAreaView>
   );
 }

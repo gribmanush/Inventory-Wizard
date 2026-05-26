@@ -4,6 +4,8 @@ import {
   ScrollView, ActivityIndicator,
 } from 'react-native';
 import BarcodeScannerModal from '../../components/BarcodeScannerModal';
+import HelpModal from '../../components/HelpModal';
+import useHelpModal from '../../hooks/useHelpModal';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
@@ -21,6 +23,7 @@ export default function PackOrderScreen({ navigation }) {
   const { user } = useAuth();
   const { colors } = useTheme();
 
+  const { helpVisible, showHelp, hideHelp } = useHelpModal('PackOrder');
   const [step, setStep] = useState(STEP_SO);
   const [soInput, setSoInput] = useState('');
   const [soError, setSoError] = useState('');
@@ -81,7 +84,9 @@ export default function PackOrderScreen({ navigation }) {
             <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
           <Text style={[s.headerTitle, { color: colors.text }]}>Pack Order</Text>
-          <View style={{ width: 40 }} />
+          <TouchableOpacity onPress={showHelp} style={{ width: 40, alignItems: 'flex-end' }}>
+            <Ionicons name="help-circle-outline" size={22} color={colors.textSecondary} />
+          </TouchableOpacity>
         </View>
         <View style={s.stepContainer}>
           <View style={[s.resultCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
@@ -104,6 +109,7 @@ export default function PackOrderScreen({ navigation }) {
             <Text style={[s.secondaryBtnText, { color: colors.text }]}>New Order</Text>
           </TouchableOpacity>
         </View>
+        <HelpModal visible={helpVisible} onClose={hideHelp} screenKey="PackOrder" />
       </SafeAreaView>
     );
   }
@@ -116,7 +122,9 @@ export default function PackOrderScreen({ navigation }) {
             <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
           <Text style={[s.headerTitle, { color: colors.text }]}>Pack Order · {order?.so_number}</Text>
-          <View style={{ width: 40 }} />
+          <TouchableOpacity onPress={showHelp} style={{ width: 40, alignItems: 'flex-end' }}>
+            <Ionicons name="help-circle-outline" size={22} color={colors.textSecondary} />
+          </TouchableOpacity>
         </View>
         <ScrollView contentContainerStyle={s.stepContainer} keyboardShouldPersistTaps="handled">
           <View style={[s.orderInfoCard, { backgroundColor: colors.bannerBlueBg }]}>
@@ -166,6 +174,7 @@ export default function PackOrderScreen({ navigation }) {
           onScanned={data => { setBarcode(data); setPackError(''); }}
           onClose={() => setScannerVisible(false)}
         />
+        <HelpModal visible={helpVisible} onClose={hideHelp} screenKey="PackOrder" />
       </SafeAreaView>
     );
   }
@@ -178,7 +187,9 @@ export default function PackOrderScreen({ navigation }) {
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={[s.headerTitle, { color: colors.text }]}>Pack Order</Text>
-        <View style={{ width: 40 }} />
+        <TouchableOpacity onPress={showHelp} style={{ width: 40, alignItems: 'flex-end' }}>
+          <Ionicons name="help-circle-outline" size={22} color={colors.textSecondary} />
+        </TouchableOpacity>
       </View>
       <ScrollView contentContainerStyle={s.stepContainer} keyboardShouldPersistTaps="handled">
         <Ionicons name="cube-outline" size={52} color={colors.primary} style={{ marginBottom: 20 }} />
@@ -201,6 +212,7 @@ export default function PackOrderScreen({ navigation }) {
           <Text style={s.primaryBtnText}>Enter</Text>
         </TouchableOpacity>
       </ScrollView>
+      <HelpModal visible={helpVisible} onClose={hideHelp} screenKey="PackOrder" />
     </SafeAreaView>
   );
 }

@@ -11,6 +11,8 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useDrawer } from '../../contexts/DrawerContext';
 import { LogoIcon } from '../../components/Logo';
 import BarcodeScannerModal from '../../components/BarcodeScannerModal';
+import HelpModal from '../../components/HelpModal';
+import useHelpModal from '../../hooks/useHelpModal';
 import { dbGetLowStockProducts, dbGetNewOrdersCount, dbSearchProducts } from '../../database/database';
 
 export default function HomeScreen({ navigation }) {
@@ -18,6 +20,7 @@ export default function HomeScreen({ navigation }) {
   const { colors } = useTheme();
   const { openDrawer } = useDrawer();
 
+  const { helpVisible, showHelp, hideHelp } = useHelpModal('Home');
   const [lowStockCount, setLowStockCount] = useState(0);
   const [newOrdersCount, setNewOrdersCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
@@ -190,17 +193,18 @@ export default function HomeScreen({ navigation }) {
         <TouchableOpacity style={s.modalOverlay} activeOpacity={1} onPress={() => setProfileMenuVisible(false)}>
           <View style={[s.profileMenu, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             {[
-              { label: 'Account', icon: 'person-outline', screen: 'Profile', section: 'account' },
-              { label: 'Premium Status', icon: 'star-outline', screen: 'Profile', section: 'premium' },
-              { label: 'Change Details', icon: 'create-outline', screen: 'Profile', section: 'edit' },
+              { label: 'Account', icon: 'person-outline', section: 'account' },
+              { label: 'Premium Status', icon: 'star-outline', section: 'premium' },
+              { label: 'Change Details', icon: 'create-outline', section: 'edit' },
+              { label: 'Help', icon: 'help-circle-outline', action: () => { setProfileMenuVisible(false); showHelp(); } },
             ].map(item => (
               <TouchableOpacity
                 key={item.label}
                 style={[s.profileMenuItem, { borderBottomColor: colors.border }]}
-                onPress={() => {
+                onPress={item.action || (() => {
                   setProfileMenuVisible(false);
                   navigation.navigate('Profile', { section: item.section });
-                }}
+                })}
               >
                 <Ionicons name={item.icon} size={18} color={colors.primary} style={{ marginRight: 10 }} />
                 <Text style={[s.profileMenuText, { color: colors.text }]}>{item.label}</Text>
@@ -219,6 +223,7 @@ export default function HomeScreen({ navigation }) {
         }}
         onClose={() => setScannerVisible(false)}
       />
+      <HelpModal visible={helpVisible} onClose={hideHelp} screenKey="Home" />
     </SafeAreaView>
   );
 }

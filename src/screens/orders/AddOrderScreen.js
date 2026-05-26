@@ -9,6 +9,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { dbCreateOrder, dbAddOrderItem, dbGetProductByBarcodeOrName } from '../../database/database';
 import BarcodeScannerModal from '../../components/BarcodeScannerModal';
+import HelpModal from '../../components/HelpModal';
+import useHelpModal from '../../hooks/useHelpModal';
 
 const STEP_DETAILS = 1;
 const STEP_ITEMS = 2;
@@ -18,6 +20,7 @@ export default function AddOrderScreen({ navigation }) {
   const { user } = useAuth();
   const { colors } = useTheme();
 
+  const { helpVisible, showHelp, hideHelp } = useHelpModal('AddOrder');
   const [step, setStep] = useState(STEP_DETAILS);
   const [orderId, setOrderId] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -104,7 +107,9 @@ export default function AddOrderScreen({ navigation }) {
         <View style={[s.header, { backgroundColor: colors.headerBg, borderBottomColor: colors.border }]}>
           <View style={{ width: 40 }} />
           <Text style={[s.headerTitle, { color: colors.text }]}>Add Order</Text>
-          <View style={{ width: 40 }} />
+          <TouchableOpacity onPress={showHelp} style={{ width: 40, alignItems: 'flex-end' }}>
+            <Ionicons name="help-circle-outline" size={22} color={colors.textSecondary} />
+          </TouchableOpacity>
         </View>
         <View style={s.successContainer}>
           <Ionicons name="checkmark-circle" size={64} color={colors.success} />
@@ -126,6 +131,7 @@ export default function AddOrderScreen({ navigation }) {
             <Text style={[s.secondaryBtnText, { color: colors.text }]}>View Orders</Text>
           </TouchableOpacity>
         </View>
+        <HelpModal visible={helpVisible} onClose={hideHelp} screenKey="AddOrder" />
       </SafeAreaView>
     );
   }
@@ -138,7 +144,9 @@ export default function AddOrderScreen({ navigation }) {
             <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
           <Text style={[s.headerTitle, { color: colors.text }]}>Add Items · {form.soNumber}</Text>
-          <View style={{ width: 40 }} />
+          <TouchableOpacity onPress={showHelp} style={{ width: 40, alignItems: 'flex-end' }}>
+            <Ionicons name="help-circle-outline" size={22} color={colors.textSecondary} />
+          </TouchableOpacity>
         </View>
         <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
           <Text style={[s.sectionLabel, { color: colors.textSecondary }]}>Add products to this order</Text>
@@ -203,6 +211,7 @@ export default function AddOrderScreen({ navigation }) {
           onScanned={data => { setBarcode(data); setItemError(''); }}
           onClose={() => setScannerVisible(false)}
         />
+        <HelpModal visible={helpVisible} onClose={hideHelp} screenKey="AddOrder" />
       </SafeAreaView>
     );
   }
@@ -215,7 +224,9 @@ export default function AddOrderScreen({ navigation }) {
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={[s.headerTitle, { color: colors.text }]}>Add Order</Text>
-        <View style={{ width: 40 }} />
+        <TouchableOpacity onPress={showHelp} style={{ width: 40, alignItems: 'flex-end' }}>
+          <Ionicons name="help-circle-outline" size={22} color={colors.textSecondary} />
+        </TouchableOpacity>
       </View>
       <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
         {[
@@ -261,6 +272,7 @@ export default function AddOrderScreen({ navigation }) {
           {loading ? <ActivityIndicator color="#fff" /> : <Text style={s.primaryBtnText}>Create New Order</Text>}
         </TouchableOpacity>
       </ScrollView>
+      <HelpModal visible={helpVisible} onClose={hideHelp} screenKey="AddOrder" />
     </SafeAreaView>
   );
 }

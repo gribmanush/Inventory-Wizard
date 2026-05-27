@@ -26,6 +26,9 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": []
+    "scheme": "inventorywizard",
+    "plugins": [
+      "expo-web-browser"
+    ]
   }
 }

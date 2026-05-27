@@ -1,13 +1,24 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
   StyleSheet, ActivityIndicator, KeyboardAvoidingView,
   Platform, ScrollView, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as Google from 'expo-auth-session/providers/google';
+import * as WebBrowser from 'expo-web-browser';
+import { GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
+
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { LogoFull } from '../../components/Logo';
+import { auth } from '../../config/firebase';
+
+WebBrowser.maybeCompleteAuthSession();
+
+const GOOGLE_WEB_CLIENT_ID = '44479201802-2f6bnafdebk5b84685te6mtgr0v8lr71.apps.googleusercontent.com';
+// auth.expo.io proxy URI — must be registered in Google Cloud Console OAuth client
+const EXPO_PROXY_REDIRECT_URI = 'https://auth.expo.io/@gribmanush/InventoryWizard';
 
 export default function LoginScreen({ navigation }) {
   const { login } = useAuth();
@@ -16,8 +27,36 @@ export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [showPass, setShowPass] = useState(false);
   const [errors, setErrors] = useState({});
+
+  const [, response, promptAsync] = Google.useIdTokenAuthRequest({
+    clientId: GOOGLE_WEB_CLIENT_ID,
+    redirectUri: EXPO_PROXY_REDIRECT_URI,
+  });
+
+  useEffect(() => {
+    if (!response) return;
+    if (response.type === 'success') {
+      const idToken = response.params?.id_token;
+      if (!idToken) {
+        setGoogleLoading(false);
+        Alert.alert('Google Sign-In Failed', 'Could not retrieve ID token.');
+        return;
+      }
+      const credential = GoogleAuthProvider.credential(idToken);
+      signInWithCredential(auth, credential).catch(e => {
+        setGoogleLoading(false);
+        Alert.alert('Google Sign-In Failed', e.message);
+      });
+    } else if (response.type === 'error') {
+      setGoogleLoading(false);
+      Alert.alert('Google Sign-In Failed', response.error?.message || 'Something went wrong.');
+    } else {
+      setGoogleLoading(false);
+    }
+  }, [response]);
 
   const validate = () => {
     const e = {};
@@ -36,6 +75,11 @@ export default function LoginScreen({ navigation }) {
     if (!result.success) {
       Alert.alert('Login Failed', result.error);
     }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    await promptAsync();
   };
 
   const s = useMemo(() => makeStyles(colors), [colors]);
@@ -85,8 +129,33 @@ export default function LoginScreen({ navigation }) {
             <Text style={[s.forgotText, { color: colors.primary }]}>Forgot password?</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={[s.primaryBtn, { backgroundColor: colors.primary }]} onPress={handleLogin} disabled={loading}>
+          <TouchableOpacity
+            style={[s.primaryBtn, { backgroundColor: colors.primary }]}
+            onPress={handleLogin}
+            disabled={loading || googleLoading}
+          >
             {loading ? <ActivityIndicator color="#fff" /> : <Text style={s.primaryBtnText}>Login</Text>}
+          </TouchableOpacity>
+
+          <View style={s.dividerRow}>
+            <View style={[s.dividerLine, { backgroundColor: colors.border }]} />
+            <Text style={[s.dividerText, { color: colors.textSecondary }]}>or</Text>
+            <View style={[s.dividerLine, { backgroundColor: colors.border }]} />
+          </View>
+
+          <TouchableOpacity
+            style={[s.googleBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
+            onPress={handleGoogleSignIn}
+            disabled={loading || googleLoading}
+          >
+            {googleLoading ? (
+              <ActivityIndicator color="#4285F4" />
+            ) : (
+              <>
+                <GoogleLogo />
+                <Text style={[s.googleBtnText, { color: colors.text }]}>Continue with Google</Text>
+              </>
+            )}
           </TouchableOpacity>
 
           <View style={s.switchRow}>
@@ -100,6 +169,26 @@ export default function LoginScreen({ navigation }) {
     </SafeAreaView>
   );
 }
+
+function GoogleLogo() {
+  return (
+    <View style={googleLogoStyles.container}>
+      <Text style={googleLogoStyles.g}>G</Text>
+    </View>
+  );
+}
+
+const googleLogoStyles = StyleSheet.create({
+  container: {
+    width: 22, height: 22, borderRadius: 11,
+    backgroundColor: '#fff',
+    alignItems: 'center', justifyContent: 'center',
+    marginRight: 10,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15, shadowRadius: 1, elevation: 1,
+  },
+  g: { fontSize: 14, fontWeight: '700', color: '#4285F4' },
+});
 
 function makeStyles(colors) {
   return StyleSheet.create({
@@ -139,9 +228,24 @@ function makeStyles(colors) {
       borderRadius: 12,
       paddingVertical: 15,
       alignItems: 'center',
-      marginBottom: 24,
+      marginBottom: 20,
     },
     primaryBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+    dividerRow: {
+      flexDirection: 'row', alignItems: 'center', marginBottom: 16, gap: 10,
+    },
+    dividerLine: { flex: 1, height: 1 },
+    dividerText: { fontSize: 13 },
+    googleBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: 12,
+      borderWidth: 1,
+      paddingVertical: 14,
+      marginBottom: 24,
+    },
+    googleBtnText: { fontSize: 15, fontWeight: '600' },
     switchRow: { flexDirection: 'row', justifyContent: 'center' },
     switchText: { fontSize: 14 },
     switchLink: { fontSize: 14, fontWeight: '600' },

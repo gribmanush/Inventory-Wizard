@@ -22,7 +22,20 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        const profile = await fetchProfile(firebaseUser.uid);
+        let profile = await fetchProfile(firebaseUser.uid);
+        if (!profile.signup_date) {
+          const now = new Date().toISOString();
+          const freePeriodEnd = new Date(Date.now() + 2 * 365 * 24 * 60 * 60 * 1000).toISOString();
+          profile = {
+            full_name: firebaseUser.displayName || 'User',
+            business_name: null,
+            signup_date: now,
+            free_period_end: freePeriodEnd,
+            subscription_status: 'free',
+            avatar_uri: firebaseUser.photoURL || null,
+          };
+          await setDoc(doc(db, 'users', firebaseUser.uid), profile);
+        }
         setUser({ user_id: firebaseUser.uid, email: firebaseUser.email, ...profile });
       } else {
         setUser(null);

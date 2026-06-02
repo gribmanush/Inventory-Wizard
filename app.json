@@ -29,6 +29,11 @@
     "scheme": "inventorywizard",
     "plugins": [
       "expo-web-browser"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "0bea73e5-470e-411f-8ea0-54355f49c344"
+      }
+    }
   }
 }

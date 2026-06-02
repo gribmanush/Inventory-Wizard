@@ -1,14 +1,19 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function BarcodeScannerModal({ visible, onScanned, onClose }) {
   const [permission, requestPermission] = useCameraPermissions();
+  const [torchOn, setTorchOn] = useState(false);
   const scannedRef = useRef(false);
 
   useEffect(() => {
-    if (visible) scannedRef.current = false;
+    if (visible) {
+      scannedRef.current = false;
+    } else {
+      setTorchOn(false);
+    }
   }, [visible]);
 
   const handleScanned = ({ data }) => {
@@ -44,6 +49,7 @@ export default function BarcodeScannerModal({ visible, onScanned, onClose }) {
         <CameraView
           style={StyleSheet.absoluteFillObject}
           facing="back"
+          enableTorch={torchOn}
           barcodeScannerSettings={{
             barcodeTypes: ['ean13', 'ean8', 'upc_a', 'upc_e', 'code128', 'code39', 'code93', 'qr'],
           }}
@@ -70,6 +76,14 @@ export default function BarcodeScannerModal({ visible, onScanned, onClose }) {
 
         <TouchableOpacity style={s.closeBtn} onPress={onClose}>
           <Ionicons name="close" size={28} color="#fff" />
+        </TouchableOpacity>
+
+        <TouchableOpacity style={s.torchBtn} onPress={() => setTorchOn(t => !t)}>
+          <Ionicons
+            name={torchOn ? 'flashlight' : 'flashlight-outline'}
+            size={24}
+            color={torchOn ? '#FCD34D' : '#fff'}
+          />
         </TouchableOpacity>
       </View>
     </Modal>
@@ -107,6 +121,12 @@ const s = StyleSheet.create({
 
   closeBtn: {
     position: 'absolute', top: 52, right: 20,
+    width: 44, height: 44, borderRadius: 22,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  torchBtn: {
+    position: 'absolute', top: 52, left: 20,
     width: 44, height: 44, borderRadius: 22,
     backgroundColor: 'rgba(0,0,0,0.5)',
     alignItems: 'center', justifyContent: 'center',

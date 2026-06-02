@@ -69,21 +69,23 @@ export default function BarcodeScannerModal({ visible, onScanned, onClose }) {
             </View>
             <View style={s.dimSide} />
           </View>
-          <View style={s.dimBottom}>
-            <Text style={s.hint}>Align barcode within the frame</Text>
-          </View>
+          <View style={s.dimBottom} />
+        </View>
+
+        {/* Hint + torch button — outside pointer-events-none overlay so button is tappable */}
+        <View style={s.bottomContent} pointerEvents="box-none">
+          <Text style={s.hint}>Align barcode within the frame</Text>
+          <TouchableOpacity style={s.torchBtn} onPress={() => setTorchOn(t => !t)}>
+            <Ionicons
+              name={torchOn ? 'flashlight' : 'flashlight-outline'}
+              size={24}
+              color={torchOn ? '#FCD34D' : '#fff'}
+            />
+          </TouchableOpacity>
         </View>
 
         <TouchableOpacity style={s.closeBtn} onPress={onClose}>
           <Ionicons name="close" size={28} color="#fff" />
-        </TouchableOpacity>
-
-        <TouchableOpacity style={s.torchBtn} onPress={() => setTorchOn(t => !t)}>
-          <Ionicons
-            name={torchOn ? 'flashlight' : 'flashlight-outline'}
-            size={24}
-            color={torchOn ? '#FCD34D' : '#fff'}
-          />
         </TouchableOpacity>
       </View>
     </Modal>
@@ -103,7 +105,16 @@ const s = StyleSheet.create({
   dimTop: { flex: 1, backgroundColor: DIM },
   middleRow: { flexDirection: 'row', height: VIEWFINDER },
   dimSide: { flex: 1, backgroundColor: DIM },
-  dimBottom: { flex: 1, backgroundColor: DIM, alignItems: 'center', paddingTop: 20 },
+  dimBottom: { flex: 1, backgroundColor: DIM },
+  bottomContent: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: '50%',
+    marginTop: VIEWFINDER / 2 + 16,
+    alignItems: 'center',
+    gap: 24,
+  },
 
   viewfinder: {
     width: VIEWFINDER,
@@ -126,10 +137,10 @@ const s = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   torchBtn: {
-    position: 'absolute', top: 52, left: 20,
-    width: 44, height: 44, borderRadius: 22,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    width: 52, height: 52, borderRadius: 26,
+    backgroundColor: 'rgba(0,0,0,0.45)',
     alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.25)',
   },
 
   permContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, backgroundColor: '#fff' },

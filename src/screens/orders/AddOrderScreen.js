@@ -9,6 +9,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { dbCreateOrder, dbAddOrderItem, dbGetProductByBarcodeOrName } from '../../database/database';
 import BarcodeScannerModal from '../../components/BarcodeScannerModal';
+import LocationPickerModal from '../../components/LocationPickerModal';
 import HelpModal from '../../components/HelpModal';
 import useHelpModal from '../../hooks/useHelpModal';
 
@@ -37,6 +38,7 @@ export default function AddOrderScreen({ navigation }) {
   const [addedItems, setAddedItems] = useState([]);
   const [itemError, setItemError] = useState('');
   const [scannerVisible, setScannerVisible] = useState(false);
+  const [mapVisible, setMapVisible] = useState(false);
 
   const setF = (field, val) => {
     setForm(p => ({ ...p, [field]: val }));
@@ -232,7 +234,6 @@ export default function AddOrderScreen({ navigation }) {
         {[
           { label: 'Merchant Name *', field: 'merchantName' },
           { label: 'SO Number *', field: 'soNumber' },
-          { label: 'Delivery Address', field: 'deliveryAddress' },
         ].map(({ label, field }) => (
           <View key={field} style={s.fieldGroup}>
             <Text style={[s.label, { color: colors.textSecondary }]}>{label}</Text>
@@ -246,6 +247,22 @@ export default function AddOrderScreen({ navigation }) {
             {formErrors[field] && <Text style={[s.errorText, { color: colors.error }]}>{formErrors[field]}</Text>}
           </View>
         ))}
+
+        <View style={s.fieldGroup}>
+          <Text style={[s.label, { color: colors.textSecondary }]}>Delivery Address</Text>
+          <View style={[s.inputRow, { backgroundColor: colors.inputBg, borderColor: colors.border }]}>
+            <TextInput
+              style={[s.inputFlex, { color: colors.text }]}
+              placeholder="Enter or pick from map"
+              placeholderTextColor={colors.textSecondary}
+              value={form.deliveryAddress}
+              onChangeText={v => setF('deliveryAddress', v)}
+            />
+            <TouchableOpacity onPress={() => setMapVisible(true)} style={s.scanBtn}>
+              <Ionicons name="location-outline" size={22} color={colors.primary} />
+            </TouchableOpacity>
+          </View>
+        </View>
 
         <View style={s.fieldGroup}>
           <Text style={[s.label, { color: colors.textSecondary }]}>Payment Status</Text>
@@ -272,6 +289,11 @@ export default function AddOrderScreen({ navigation }) {
           {loading ? <ActivityIndicator color="#fff" /> : <Text style={s.primaryBtnText}>Create New Order</Text>}
         </TouchableOpacity>
       </ScrollView>
+      <LocationPickerModal
+        visible={mapVisible}
+        onClose={() => setMapVisible(false)}
+        onLocationSelected={addr => setF('deliveryAddress', addr)}
+      />
       <HelpModal visible={helpVisible} onClose={hideHelp} screenKey="AddOrder" />
     </SafeAreaView>
   );
@@ -293,7 +315,7 @@ function makeStyles(colors) {
     input: { borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, borderWidth: 1 },
     inputRow: { flexDirection: 'row', alignItems: 'center', borderRadius: 10, borderWidth: 1, paddingRight: 6 },
     inputFlex: { flex: 1, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14 },
-    scanBtn: { padding: 6 },
+    scanBtn: { padding: 8 },
     errorText: { fontSize: 12, marginTop: 4 },
     toggleRow: { flexDirection: 'row', gap: 8 },
     toggleBtn: { flex: 1, paddingVertical: 10, borderRadius: 8, borderWidth: 1.5, alignItems: 'center' },

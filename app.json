@@ -28,7 +28,13 @@
     },
     "scheme": "inventorywizard",
     "plugins": [
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow InventoryWizard to use your location to set delivery addresses."
+        }
+      ]
     ],
     "extra": {
       "eas": {

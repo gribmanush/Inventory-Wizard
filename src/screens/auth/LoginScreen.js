@@ -104,6 +104,7 @@ export default function LoginScreen({ navigation }) {
               keyboardType="email-address"
               autoCapitalize="none"
               autoComplete="email"
+              testID="login-email"
             />
             {errors.email && <Text style={s.errorText}>{errors.email}</Text>}
           </View>
@@ -117,6 +118,7 @@ export default function LoginScreen({ navigation }) {
                 value={password}
                 onChangeText={v => { setPassword(v); setErrors(p => ({ ...p, password: undefined })); }}
                 secureTextEntry={!showPass}
+                testID="login-password"
               />
               <TouchableOpacity onPress={() => setShowPass(p => !p)} style={s.eyeBtn}>
                 <Text style={[s.eyeText, { color: colors.primary }]}>{showPass ? 'Hide' : 'Show'}</Text>
@@ -133,6 +135,7 @@ export default function LoginScreen({ navigation }) {
             style={[s.primaryBtn, { backgroundColor: colors.primary }]}
             onPress={handleLogin}
             disabled={loading || googleLoading}
+            testID="login-button"
           >
             {loading ? <ActivityIndicator color="#fff" /> : <Text style={s.primaryBtnText}>Login</Text>}
           </TouchableOpacity>
